@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Troopod — AI Landing Page Personalizer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f13;
+      --surface: #18181f;
+      --surface2: #22222c;
+      --border: rgba(255,255,255,0.08);
+      --purple: #7c5cfc;
+      --purple-glow: rgba(124,92,252,0.18);
+      --teal: #2dd4bf;
+      --amber: #f59e0b;
+      --green: #10b981;
+      --red: #ef4444;
+      --text: #e8e8f0;
+      --muted: #8888a0;
+      --radius: 12px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      padding: 24px 40px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo-mark {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--purple), var(--teal));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 16px; color: white;
+    }
+    header h1 { font-size: 20px; font-weight: 600; }
+    header span { color: var(--muted); font-size: 14px; margin-left: 6px; }
+
+    /* ── LAYOUT ── */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 60px 0 40px;
+      text-align: center;
+    }
+    .hero .badge {
+      display: inline-block;
+      background: var(--purple-glow);
+      color: var(--purple);
+      border: 1px solid rgba(124,92,252,0.3);
+      border-radius: 100px;
+      padding: 4px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 20px;
+    }
+    .hero h2 {
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1.15;
+      max-width: 640px;
+      margin: 0 auto 16px;
+    }
+    .hero h2 span { color: var(--purple); }
+    .hero p {
+      color: var(--muted);
+      font-size: 17px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* ── FORM CARD ── */
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 36px;
+      margin: 36px 0;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 720px) { .form-grid { grid-template-columns: 1fr; } }
+
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input, textarea {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 12px 16px;
+      font-size: 15px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+      outline: none;
+      width: 100%;
+    }
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+    input:focus, textarea:focus {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 3px var(--purple-glow);
+    }
+    textarea { resize: vertical; min-height: 110px; }
+
+    .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ── BUTTON ── */
+    .btn-primary {
+      background: linear-gradient(135deg, var(--purple), #5b3fd6);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      padding: 14px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px var(--purple-glow); }
+    .btn-primary:active { transform: none; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ── LOADING STATE ── */
+    .loading-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin: 20px 0;
+    }
+    .loading-bar-inner {
+      height: 100%;
+      background: linear-gradient(90deg, var(--purple), var(--teal), var(--purple));
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 2px;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    .loading-steps { display: flex; flex-direction: column; gap: 10px; padding: 16px 0; }
+    .loading-step {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 14px; color: var(--muted);
+    }
+    .loading-step.active { color: var(--text); }
+    .loading-step .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+    .loading-step.active .dot { background: var(--purple); animation: pulse 1s infinite; }
+    .loading-step.done .dot { background: var(--green); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* ── RESULT SECTION ── */
+    #results { display: none; margin-top: 40px; }
+
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .stat-value { font-size: 28px; font-weight: 700; }
+    .stat-value.green { color: var(--green); }
+    .stat-value.amber { color: var(--amber); }
+    .stat-value.purple { color: var(--purple); }
+    .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 16px;
+    }
+    .section-header h3 { font-size: 17px; font-weight: 600; }
+    .badge-count {
+      background: var(--purple-glow);
+      color: var(--purple);
+      border-radius: 100px;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* ── ANALYSIS CARDS ── */
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    @media (max-width: 720px) { .analysis-grid { grid-template-columns: 1fr; } }
+
+    .analysis-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .analysis-card h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 14px;
+    }
+    .analysis-row {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+      font-size: 14px;
+    }
+    .analysis-row:last-child { border-bottom: none; }
+    .analysis-row .key { color: var(--muted); flex-shrink: 0; }
+    .analysis-row .val { color: var(--text); text-align: right; }
+
+    /* ── EDITS LIST ── */
+    .edits-list { display: flex; flex-direction: column; gap: 16px; margin-bottom: 32px; }
+
+    .edit-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .edit-card:hover { border-color: rgba(124,92,252,0.4); }
+
+    .edit-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+    .edit-type {
+      background: var(--surface2);
+      color: var(--purple);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: monospace;
+    }
+    .confidence-badge {
+      border-radius: 100px;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .confidence-high { background: rgba(16,185,129,0.15); color: var(--green); }
+    .confidence-medium { background: rgba(245,158,11,0.15); color: var(--amber); }
+    .confidence-low { background: rgba(239,68,68,0.15); color: var(--red); }
+
+    .edit-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+
+    .diff-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 600px) { .diff-row { grid-template-columns: 1fr; } }
+
+    .diff-box { border-radius: 8px; padding: 12px; font-size: 14px; line-height: 1.5; }
+    .diff-box.original { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5; }
+    .diff-box.updated { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); color: #6ee7b7; }
+    .diff-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; opacity: 0.7; }
+
+    .edit-reason { font-size: 13px; color: var(--muted); padding-top: 4px; }
+    .edit-reason strong { color: var(--text); }
+
+    /* ── PREVIEW SECTION ── */
+    .preview-section { margin-bottom: 40px; }
+
+    .preview-tabs {
+      display: flex; gap: 4px;
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 4px;
+      width: fit-content;
+      margin-bottom: 16px;
+    }
+    .tab-btn {
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      background: transparent;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+    .tab-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+
+    .preview-frame {
+      width: 100%;
+      height: 600px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: white;
+    }
+
+    .original-preview-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px;
+      text-align: center;
+      display: none;
+    }
+    .original-preview-box p { color: var(--muted); font-size: 14px; margin-bottom: 20px; line-height: 1.7; }
+    .btn-open-original {
+      display: inline-block;
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 28px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.2s;
+    }
+    .btn-open-original:hover { border-color: var(--purple); color: var(--purple); }
+
+    /* ── SUMMARY BOX ── */
+    .summary-box {
+      background: var(--purple-glow);
+      border: 1px solid rgba(124,92,252,0.3);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 32px;
+      font-size: 15px;
+      color: var(--text);
+      line-height: 1.7;
+    }
+    .summary-box .label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--purple);
+      margin-bottom: 8px;
+    }
+
+    /* ── ERROR STATE ── */
+    .error-box {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      color: #fca5a5;
+      font-size: 14px;
+      margin-top: 16px;
+      display: none;
+    }
+
+    /* ── HIDDEN ── */
+    .hidden { display: none !important; }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo-mark">T</div>
+  <h1>Troopod <span>AI Landing Page Personalizer</span></h1>
+</header>
+
+<div class="container">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="badge">Powered by Claude AI + CRO Principles</div>
+    <h2>Turn ad visitors into <span>customers</span></h2>
+    <p>Personalize your landing page to match your ad creative in seconds — without touching your design.</p>
+  </div>
+
+  <!-- Form -->
+  <div class="form-card">
+    <div class="form-grid">
+
+      <div class="field full">
+        <label>Landing Page URL</label>
+        <input type="url" id="pageUrl" placeholder="https://yourwebsite.com/landing-page" />
+        <div class="hint">Must be a publicly accessible URL (not behind login)</div>
+      </div>
+
+      <div class="field full">
+        <label>Ad Creative Description</label>
+        <textarea id="adDescription" placeholder="Describe your ad: What does it say? Who is it for? What's the offer? What's the tone? Example: 'Facebook ad targeting SaaS founders, headline: Stop losing leads to slow follow-up. We automate your sales outreach in 5 minutes. CTA: Start Free Trial. Urgent, professional tone.'"
+        ></textarea>
+        <div class="hint">The more detail you give, the better the personalization</div>
+      </div>
+
+      <div class="field full">
+        <label>Ad Image URL <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(optional — for visual ads)</span></label>
+        <input type="url" id="adImageUrl" placeholder="https://example.com/your-ad-image.jpg" />
+        <div class="hint">Direct link to your ad image. Claude will analyze the visual.</div>
+      </div>
+
+    </div>
+
+    <button class="btn-primary" id="runBtn" onclick="runPersonalization()">
+      ✨ Personalize Landing Page
+    </button>
+    <div class="error-box" id="errorBox"></div>
+  </div>
+
+  <!-- Loading State -->
+  <div id="loadingSection" class="hidden">
+    <div class="loading-bar"><div class="loading-bar-inner"></div></div>
+    <div class="loading-steps">
+      <div class="loading-step" id="step1"><div class="dot"></div> Fetching landing page HTML…</div>
+      <div class="loading-step" id="step2"><div class="dot"></div> Claude is reading your ad…</div>
+      <div class="loading-step" id="step3"><div class="dot"></div> Generating personalized edits…</div>
+      <div class="loading-step" id="step4"><div class="dot"></div> Validating & applying changes…</div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+
+    <!-- Summary -->
+    <div class="summary-box">
+      <div class="label">AI Personalization Summary</div>
+      <div id="summaryText"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Message Match Score</div>
+        <div class="stat-value green" id="statScore">—</div>
+        <div class="stat-sub">Before personalization</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Edits Applied</div>
+        <div class="stat-value purple" id="statEdits">—</div>
+        <div class="stat-sub">Surgical text changes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Target Audience</div>
+        <div class="stat-value amber" style="font-size:18px;padding-top:4px" id="statAudience">—</div>
+        <div class="stat-sub">Detected from ad</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Biggest Gap Fixed</div>
+        <div class="stat-value" style="font-size:14px;padding-top:6px;line-height:1.4;color:var(--teal)" id="statGap">—</div>
+      </div>
+    </div>
+
+    <!-- Analysis -->
+    <div class="section-header"><h3>Ad & Page Analysis</h3></div>
+    <div class="analysis-grid">
+      <div class="analysis-card">
+        <h4>Ad Analysis</h4>
+        <div id="adAnalysisRows"></div>
+      </div>
+      <div class="analysis-card">
+        <h4>Page Analysis</h4>
+        <div id="pageAnalysisRows"></div>
+      </div>
+    </div>
+
+    <!-- Edits -->
+    <div class="section-header">
+      <h3>Personalization Edits</h3>
+      <span class="badge-count" id="editCount">0</span>
+    </div>
+    <div class="edits-list" id="editsList"></div>
+
+    <!-- Preview -->
+    <div class="preview-section">
+      <div class="section-header"><h3>Page Preview</h3></div>
+      <div class="preview-tabs">
+        <button class="tab-btn active" onclick="showTab('personalized', this)">✨ Personalized</button>
+        <button class="tab-btn" onclick="showTab('original', this)">Original</button>
+      </div>
+      <iframe class="preview-frame" id="personalizedFrame" title="Personalized landing page preview"></iframe>
+      <div class="original-preview-box" id="originalBox">
+        <p>Most websites block being shown inside previews for security reasons.<br>Click below to open the original page in a new tab for comparison.</p>
+        <a id="originalLink" href="#" target="_blank" class="btn-open-original">↗ Open Original Page</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ── STATE ────────────────────────────────────────────────────────────────────
+  const API_BASE = "http://localhost:8000"; // Change to your Vercel backend URL after deployment
+  let resultData = null;
+
+  // ── MAIN FUNCTION ─────────────────────────────────────────────────────────────
+  async function runPersonalization() {
+    const url = document.getElementById("pageUrl").value.trim();
+    const ad = document.getElementById("adDescription").value.trim();
+    const imgUrl = document.getElementById("adImageUrl").value.trim();
+
+    // Validate inputs
+    if (!url || !ad) {
+      showError("Please fill in both the Landing Page URL and Ad Description.");
+      return;
+    }
+    if (!url.startsWith("http")) {
+      showError("Landing page URL must start with http:// or https://");
+      return;
+    }
+
+    // Reset UI
+    hideError();
+    document.getElementById("results").style.display = "none";
+    document.getElementById("runBtn").disabled = true;
+    document.getElementById("runBtn").textContent = "Personalizing…";
+    showLoading(true);
+
+    // Animate loading steps
+    await setStep(1, 800);
+    await setStep(2, 1200);
+    await setStep(3, 800);
+
+    try {
+      const response = await fetch(`${API_BASE}/personalize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          landing_page_url: url,
+          ad_description: ad,
+          ad_image_url: imgUrl || null
+        })
+      });
+
+      await setStep(4, 400);
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.detail || "API error");
+      }
+
+      resultData = await response.json();
+      showLoading(false);
+      renderResults(resultData);
+
+    } catch (err) {
+      showLoading(false);
+      showError(`Error: ${err.message}. Make sure the backend is running at ${API_BASE}`);
+    } finally {
+      document.getElementById("runBtn").disabled = false;
+      document.getElementById("runBtn").textContent = "✨ Personalize Landing Page";
+    }
+  }
+
+  // ── RENDER RESULTS ────────────────────────────────────────────────────────────
+  function renderResults(data) {
+    // Summary
+    document.getElementById("summaryText").textContent = data.summary || "Personalization complete.";
+
+    // Stats
+    document.getElementById("statScore").textContent = `${data.message_match_score}/10`;
+    document.getElementById("statEdits").textContent = data.edits_applied.length;
+    document.getElementById("statAudience").textContent = data.ad_analysis?.target_audience || "—";
+    document.getElementById("statGap").textContent = data.page_analysis?.biggest_gap || "—";
+
+    // Ad Analysis rows
+    const adAnalysis = data.ad_analysis || {};
+    const adRows = [
+      ["Main message", adAnalysis.main_message],
+      ["Key offer", adAnalysis.key_offer],
+      ["Tone", adAnalysis.tone],
+      ["Urgency", adAnalysis.urgency],
+    ];
+    document.getElementById("adAnalysisRows").innerHTML = adRows
+      .filter(([,v]) => v)
+      .map(([k,v]) => `<div class="analysis-row"><span class="key">${k}</span><span class="val">${v}</span></div>`)
+      .join("");
+
+    // Page Analysis rows
+    const pageAnalysis = data.page_analysis || {};
+    const pageRows = [
+      ["Current headline", pageAnalysis.current_headline],
+      ["Match score", `${pageAnalysis.message_match_score}/10`],
+      ["Biggest gap", pageAnalysis.biggest_gap],
+    ];
+    document.getElementById("pageAnalysisRows").innerHTML = pageRows
+      .filter(([,v]) => v)
+      .map(([k,v]) => `<div class="analysis-row"><span class="key">${k}</span><span class="val">${v}</span></div>`)
+      .join("");
+
+    // Edits
+    const edits = data.edits_applied || [];
+    document.getElementById("editCount").textContent = edits.length;
+    document.getElementById("editsList").innerHTML = edits.length === 0
+      ? `<div style="color:var(--muted);padding:16px">No edits were applied. The page may already be well-matched to your ad, or text could not be found in the HTML.</div>`
+      : edits.map(edit => `
+        <div class="edit-card">
+          <div class="edit-header">
+            <span class="edit-type">&lt;${edit.element_type || "text"}&gt;</span>
+            <span class="confidence-badge confidence-${edit.confidence || 'medium'}">${edit.confidence || 'medium'} confidence</span>
+          </div>
+          <div class="edit-body">
+            <div class="diff-row">
+              <div class="diff-box original">
+                <div class="diff-label">Before</div>
+                ${escHtml(edit.original_text || "")}
+              </div>
+              <div class="diff-box updated">
+                <div class="diff-label">After</div>
+                ${escHtml(edit.new_text || "")}
+              </div>
+            </div>
+            <div class="edit-reason"><strong>Why:</strong> ${escHtml(edit.reason || "")}</div>
+          </div>
+        </div>
+      `).join("");
+
+    // Preview - personalized uses srcdoc (always works), original opens in new tab
+    const personalized = data.personalized_html || "";
+    document.getElementById("personalizedFrame").srcdoc = personalized;
+    document.getElementById("originalLink").href = data.original_url;
+
+    document.getElementById("results").style.display = "block";
+    document.getElementById("results").scrollIntoView({ behavior: "smooth" });
+  }
+
+  // ── TABS ─────────────────────────────────────────────────────────────────────
+  function showTab(tab, btn) {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    const pf = document.getElementById("personalizedFrame");
+    const ob = document.getElementById("originalBox");
+    if (tab === "personalized") {
+      pf.style.display = "block";
+      ob.style.display = "none";
+    } else {
+      pf.style.display = "none";
+      ob.style.display = "block";
+    }
+  }
+
+  // ── HELPERS ──────────────────────────────────────────────────────────────────
+  function showLoading(show) {
+    document.getElementById("loadingSection").classList.toggle("hidden", !show);
+    if (show) resetSteps();
+  }
+
+  function resetSteps() {
+    [1,2,3,4].forEach(i => {
+      const el = document.getElementById(`step${i}`);
+      el.classList.remove("active","done");
+    });
+  }
+
+  async function setStep(n, delay) {
+    // Mark previous step done
+    if (n > 1) {
+      const prev = document.getElementById(`step${n-1}`);
+      prev.classList.remove("active");
+      prev.classList.add("done");
+    }
+    const el = document.getElementById(`step${n}`);
+    el.classList.add("active");
+    await sleep(delay);
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  function showError(msg) {
+    const box = document.getElementById("errorBox");
+    box.textContent = msg;
+    box.style.display = "block";
+  }
+  function hideError() {
+    document.getElementById("errorBox").style.display = "none";
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+</script>
+</body>
+</html>
